@@ -28,7 +28,7 @@ jobs:
 
       - name: Run Bandit SAST
         run: |
-          bandit -r secure.py \
+          bandit -r vulnerable.py \
             -f json \
             -o bandit_report.json \
             --severity-level medium \
