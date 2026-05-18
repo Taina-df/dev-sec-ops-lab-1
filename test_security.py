@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../session1"))
 
 from app_secure import app, init_db
-
+from flask import request 
 
 @pytest.fixture
 def client():
@@ -99,7 +99,7 @@ class TestXSS:
         """javascript: URI injection should not execute."""
         self._login(client)
         rv = client.get("/search?q=<a href='javascript:void(0)'>click</a>")
-        assert b"javascript:" not in rv.data
+        assert b"<a href=" not in rv.data
 
 
 # ─── API Security Tests ───────────────────────────────────────────────────────
@@ -198,6 +198,16 @@ class TestSecurityHeaders:
         server = rv.headers.get("Server", "")
         assert "Werkzeug" not in server or True  # Informational - document if leaking
 
+def test_form_requires_csrf_token(client):
+    _login(client)
+    rv = client.post('/profile', data={'bio' : 'test'})
+    assert rv.status_code in [400, 403], 'Form should require CSRF token'
 
+def _login(client):
+    return client.post("/login", data={
+        "username": "admin",
+        "password": "password"
+    })
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
